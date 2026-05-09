@@ -1,0 +1,9 @@
+.venv/
+delta_data/
+**/__pycache__/
+*.pyc
+eda_output/
+rf_output/
+rf_output_ohlc/
+backtest_output/
+node_modules/
