@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Line, LineChart, ResponsiveContainer } from "recharts";
+import { AuthProvider, useAuth } from "./auth/AuthProvider";
+import { AuthScreen } from "./auth/AuthScreen";
+import { SupabaseSetupScreen } from "./auth/SupabaseSetupScreen";
 import type { DashboardPayload } from "./types";
 import { TradingViewWidget } from "./TradingViewWidget";
 
@@ -30,7 +33,8 @@ function Sidebar() {
   );
 }
 
-export default function App() {
+function Dashboard() {
+  const { user, signOut } = useAuth();
   const [data, setData] = useState<DashboardPayload | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -65,7 +69,6 @@ export default function App() {
     <div className="flex min-h-screen bg-[#121212] text-zinc-100">
       <Sidebar />
       <div className="grid min-w-0 flex-1 grid-cols-12 gap-0">
-        {/* Asset rail */}
         <section className="col-span-12 border-b border-zinc-800 bg-zinc-950 py-2 pl-3 pr-4 md:col-span-2 md:border-b-0 md:border-r">
           <p className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-widest text-zinc-500">
             Watchlist
@@ -103,7 +106,6 @@ export default function App() {
           </div>
         </section>
 
-        {/* Main */}
         <main className="col-span-12 space-y-4 p-4 md:col-span-10">
           <header className="flex flex-wrap items-end justify-between gap-2">
             <div>
@@ -113,6 +115,16 @@ export default function App() {
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
+              <span className="hidden text-xs text-zinc-500 sm:inline" title={user?.id ?? ""}>
+                {user?.email ?? "—"}
+              </span>
+              <button
+                type="button"
+                onClick={() => void signOut()}
+                className="rounded-md border border-zinc-600 bg-zinc-800/80 px-2.5 py-1 text-xs font-medium text-zinc-200 hover:bg-zinc-800"
+              >
+                Sign out
+              </button>
               <button
                 type="button"
                 disabled={loading}
@@ -182,5 +194,29 @@ export default function App() {
         </main>
       </div>
     </div>
+  );
+}
+
+function LoadingScreen() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-[#121212] text-sm text-zinc-500">
+      Checking session…
+    </div>
+  );
+}
+
+function AppGate() {
+  const { configured, loading, session } = useAuth();
+  if (!configured) return <SupabaseSetupScreen />;
+  if (loading) return <LoadingScreen />;
+  if (!session) return <AuthScreen />;
+  return <Dashboard />;
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppGate />
+    </AuthProvider>
   );
 }
